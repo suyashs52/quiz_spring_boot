@@ -53,10 +53,10 @@ public class QuestionService {
 			map.put("mapuserpaper", mapUserPaperRepository.findAllByFkPaperAndFkUser(paperId, userId));
 			mapUserQuestionChoices = mapUserQuestionChoiceRepository.findAllByFkPaperAndFkUser(paperId, userId);
 			for (Question question : ques) {
-				opt1 = opt.stream().filter(f -> f.getFkQuestionId() == question.getId()).collect(Collectors.toList());
+				opt1 = opt.stream().filter(f -> f.getFkQuestionId().equals(question.getId())).collect(Collectors.toList());
 				question.setOpt(opt1);
 				MapUserQuestionChoice muqc = mapUserQuestionChoices.stream()
-						.filter(f -> f.getFkQuestion() == question.getId()).findFirst()
+						.filter(f -> f.getFkQuestion().equals(question.getId())).findFirst()
 						.orElseGet(MapUserQuestionChoice::new);
 				question.setChoices(muqc);
 			}
