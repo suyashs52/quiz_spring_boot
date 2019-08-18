@@ -28,7 +28,7 @@ public class Option {
 	private Integer id;
 
 	 
-	@NotNull
+	 
 	@Column(name = "fk_question_id")
 	private Integer fkQuestionId;
 

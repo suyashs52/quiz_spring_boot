@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import javax.transaction.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -60,7 +62,7 @@ public class QuestionService {
 			}
 		} else {
 			for (Question question : ques) {
-				opt1 = opt.stream().filter(f -> f.getFkQuestionId() == question.getId()).collect(Collectors.toList());
+				opt1 = opt.stream().filter(f -> f.getFkQuestionId().equals(question.getId())).collect(Collectors.toList());
 				question.setOpt(opt1);
 			}
 			for (Option opts : opt) {
@@ -72,10 +74,34 @@ public class QuestionService {
 		return map;
 	}
 
-	public void saveQuestionPaper(List<Question> ques, List<Option> option, User user, Paper paper) {
+	@Transactional
+	public void saveQuestionPaper(List<Question> ques, Paper paper) {
 
 		questionRepository.saveAll(ques);
-		optionRepository.saveAll(option);
+		List<Option> option = new ArrayList<>();
+		for (Question q : ques) {
+			for (Option o : q.getOpt()) {
+				/*if (o.getIsCorrectChoice()) {
+					q.setFkCorrectChoice(o.getId());
+				}*/
+				o.setFkQuestionId(q.getId());
+				option.add(o);
+			}
+
+		}
+		 optionRepository.saveAll(option);
+
+		// questionRepository.flush();
+		for (Question q : ques) {
+			for (Option o : q.getOpt()) {
+				if (o.getIsCorrectChoice()) {
+					q.setFkCorrectChoice(o.getId());
+					break;
+				}
+				 
+			}
+			questionRepository.updateFkCorrectChoiceById(q.getFkCorrectChoice(), q.getId());
+		}
 
 		List<User> users = (List<User>) userRepository.findAll();
 		List<MapUserPaper> mup = new ArrayList<MapUserPaper>();

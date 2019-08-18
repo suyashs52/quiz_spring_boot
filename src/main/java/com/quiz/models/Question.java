@@ -43,6 +43,7 @@ public class Question {
 	@Column(name = "fk_correct_choice")
 	private Integer fkCorrectChoice;
 	@Transient
+	@Size(min = 1, max = 5)
 	List<Option> opt;
 	@Transient
 	MapUserQuestionChoice choices;
@@ -86,11 +87,6 @@ public class Question {
 	public void setWrongMark(Integer wrongMark) {
 		this.wrongMark = wrongMark;
 	}
-
-	
-	
-	
-	 
 
 	public Integer getFkCorrectChoice() {
 		return fkCorrectChoice;

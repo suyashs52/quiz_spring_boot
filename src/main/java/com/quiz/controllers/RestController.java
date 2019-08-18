@@ -192,38 +192,33 @@ public class RestController {
 	}
 
 	@PostMapping("/savequestionpaper")
-	public ResponseEntity<Object> saveQuestionPaper(@Valid @RequestBody List<Question> ques,
-			@Valid @RequestBody List<Option> option, @Valid @RequestBody User user, @Valid @RequestBody Paper paper,
-			BindingResult result) {
+	public ResponseEntity<Object> saveQuestionPaper(@Valid @RequestBody PassParam param, BindingResult result) throws ResourceNotFoundException {
 		ResponseEntity<Object> obj = getError(result);
 		if (obj != null) {
 			return obj;
 		}
-		questionService.saveQuestionPaper(ques, option, user, paper);
+		 List<Question> ques=param.getQues();
+		 Paper paper=param.getPaper();
+		questionService.saveQuestionPaper(ques, paper);
 		return ResponseEntity.ok().body("Question data updated successfully!");
 	}
+	
+	
 
-	@PostMapping("/getquestionpaper")
-	public ResponseEntity<Object> getQuestionOption(@Valid @RequestBody Integer paperId,
-			@Valid @RequestBody Integer userId, BindingResult result) throws ResourceNotFoundException {
-		ResponseEntity<Object> obj = getError(result);
-		if (obj != null) {
-			return obj;
-		}
-		if (questionService.isValidForQuiz(userId, paperId)) {
+	@PostMapping("/getquestionpaper/{paperId}/{userId}")
+	public ResponseEntity<Object> getQuestionOption(@PathVariable(value = "paperId") Integer paperId,
+			@PathVariable(value = "userId") Integer userId) throws ResourceNotFoundException {
+
+		if (userId != 0 && questionService.isValidForQuiz(userId, paperId)) {
 			throw new ResourceNotFoundException("Not valid for quiz");
 		}
 
-		return ResponseEntity.ok().body(questionService.getQuestionOption(paperId, 0));
+		return ResponseEntity.ok().body(questionService.getQuestionOption(paperId, userId));
 	}
 
-	@PostMapping("/getquestionpaperresult")
-	public ResponseEntity<Object> getQuestionOptionResult(@Valid @RequestBody Integer paperId,
-			@Valid @RequestBody Integer userId, BindingResult result) {
-		ResponseEntity<Object> obj = getError(result);
-		if (obj != null) {
-			return obj;
-		}
+	@PostMapping("/getquestionpaperresult/{paperId}/{userId}")
+	public ResponseEntity<Object> getQuestionOptionResult(@PathVariable(value = "paperId") Integer paperId,
+			@PathVariable(value = "userId") Integer userId) {
 
 		return ResponseEntity.ok().body(questionService.getQuestionOption(paperId, userId));
 	}
@@ -253,4 +248,21 @@ public class RestController {
 		}
 	}
 
+}
+class PassParam{
+	List<Question> ques;
+	Paper paper;
+	public List<Question> getQues() {
+		return ques;
+	}
+	public void setQues(List<Question> ques) {
+		this.ques = ques;
+	}
+	public Paper getPaper() {
+		return paper;
+	}
+	public void setPaper(Paper paper) {
+		this.paper = paper;
+	}
+	
 }

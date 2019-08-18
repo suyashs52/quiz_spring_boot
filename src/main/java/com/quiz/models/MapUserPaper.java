@@ -31,9 +31,7 @@ public class MapUserPaper {
 	@NotNull
 	@Column(name = "fk_user")
 	private Integer fkUser;
-
-	@Column(name = "description")
-	private String description;
+ 
 
 	@Column(name = "fk_paper")
 	private Integer fkPaper;
@@ -62,14 +60,7 @@ public class MapUserPaper {
 	public void setFkUser(Integer fkUser) {
 		this.fkUser = fkUser;
 	}
-
-	public String getDescription() {
-		return description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
+ 
 
 	public Integer getFkPaper() {
 		return fkPaper;
