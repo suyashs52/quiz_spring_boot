@@ -15,10 +15,11 @@ public interface UserDetailService {
 	Map<String, Object> findAll(Pageable pageable);
 
 	Optional<User> findById(Integer itemId);
-	
-	public User saveUser(@Valid User user)  throws ResourceNotFoundException;
+
+	User saveUser(@Valid User user) throws ResourceNotFoundException;
+
+	void updateUser(@Valid User user) throws ResourceNotFoundException;
 
 	void delete(User user);
 
-	 
 }

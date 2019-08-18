@@ -121,6 +121,20 @@ public class RestController {
 		return ResponseEntity.ok().body("User registered successfully!");
 	}
 
+	@PostMapping("/updateuser")
+	public ResponseEntity<Object> updateUser(@Valid @RequestBody User signup, BindingResult result)
+			throws ResourceNotFoundException {
+		ResponseEntity<Object> obj = getError(result);
+		if (obj != null) {
+			return obj;
+		}
+
+		signup.setPassword(encoder.encode(signup.getCredential()));
+
+		userService.updateUser(signup);
+
+		return ResponseEntity.ok().body("User registered successfully!");
+	}
 	ResponseEntity<Object> getError(BindingResult result) {
 		if (result.getErrorCount() > 0) {
 

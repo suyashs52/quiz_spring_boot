@@ -69,7 +69,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public void configure(WebSecurity web) throws Exception {
 	    web
 	      .ignoring()
-	        .antMatchers("/api/target/login","/ui/**");
+	        .antMatchers("/api/target/login","/api/target/**","/ui/**");
 	}
 	@Bean
 	CorsConfigurationSource corsConfigurationSource() {

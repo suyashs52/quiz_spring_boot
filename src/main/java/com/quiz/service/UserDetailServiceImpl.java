@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.quiz.models.User;
+import com.quiz.projection.UserProjection;
 import com.quiz.repository.UserRepository;
 import com.quiz.security.UserPrinciple;
 import com.quiz.utils.ResourceNotFoundException;
@@ -30,7 +32,7 @@ public class UserDetailServiceImpl implements UserDetailsService, UserDetailServ
 
 	@Override
 	public Map<String, Object> findAll(Pageable pageable) {
-		Page<User> pagableItems = userRepository.findAll(pageable);
+		Page<UserProjection> pagableItems = userRepository.findAllProjectedBy(pageable);
 
 		Map<String, Object> map = new HashMap<>();
 		map.put("page", pagableItems.getTotalPages());
@@ -51,6 +53,7 @@ public class UserDetailServiceImpl implements UserDetailsService, UserDetailServ
 		userRepository.delete(user);
 	}
 
+	@Override
 	public User saveUser(@Valid User user) throws ResourceNotFoundException {
 		if (userRepository.existsByUsername(user.getUsername())) {
 			LOGGER.info("Username is already taken!");
@@ -64,6 +67,14 @@ public class UserDetailServiceImpl implements UserDetailsService, UserDetailServ
 		}
 
 		return userRepository.save(user);
+	}
+
+	@Override
+	@Transactional
+	public void updateUser(@Valid User user) {
+		//userRepository.save(user);
+		 userRepository.setPasswordUser(user.getId(), user.getPassword());
+
 	}
 
 	@Override
