@@ -29,18 +29,23 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.quiz.models.Login;
+import com.quiz.models.MapUserQuestionChoice;
+import com.quiz.models.Option;
+import com.quiz.models.Paper;
+import com.quiz.models.Question;
 import com.quiz.models.User;
 import com.quiz.response.JwtResponse;
 import com.quiz.security.UserPrinciple;
 import com.quiz.security.jwt.JwtProvider;
+import com.quiz.service.PaperService;
+import com.quiz.service.QuestionService;
 import com.quiz.service.UserDetailService;
 import com.quiz.utils.ErrorDetails;
 import com.quiz.utils.ResourceNotFoundException;
 
-@CrossOrigin(origins = "*", maxAge = 3600)
+@CrossOrigin(origins = "*", maxAge = 3600, allowedHeaders = "*")
 
 @org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/target/")
@@ -51,6 +56,11 @@ public class RestController {
 
 	@Autowired
 	UserDetailService userService;
+
+	@Autowired
+	PaperService paperService;
+	@Autowired
+	QuestionService questionService;
 
 	@Autowired
 	PasswordEncoder encoder;
@@ -74,28 +84,28 @@ public class RestController {
 		String role = userPrincipal.getAuthorities().toString();
 		String name = userPrincipal.getName();
 		String jwt = jwtProvider.generateJwtToken(authentication);
-		 
+
 		return ResponseEntity.ok(new JwtResponse(jwt, name, role));
 	}
 
 	@PostMapping("/logins")
-	@PreAuthorize("hasRole('[ADMIN]')")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> authenticateUser() {
-		//ResponseEntity<Object> obj = 
-		 
-		 
+		// ResponseEntity<Object> obj =
+
 		return ResponseEntity.ok(11);
 	}
-	@PostMapping("/user")
-	//@PreAuthorize("hasRole('ADMIN')")
+
+	@GetMapping("/user")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> getUser() {
-		//ResponseEntity<Object> obj = 
-		 
-		 
+		// ResponseEntity<Object> obj =
+
 		return ResponseEntity.ok(11);
 	}
+
 	@GetMapping("/users/{pageno}") // all list by pagination
-	//@PreAuthorize("hasRole('ADMIN')")
+	// @PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> getAllUser(@PathVariable(value = "pageno") Integer pageno) {
 
 		Pageable pageable = PageRequest.of(pageno, 10);
@@ -103,9 +113,7 @@ public class RestController {
 
 		return ResponseEntity.ok(map);
 	}
-	
-	
-	
+
 	@PostMapping("/signup")
 	public ResponseEntity<Object> registerUser(@Valid @RequestBody User signup, BindingResult result)
 			throws ResourceNotFoundException {
@@ -135,6 +143,98 @@ public class RestController {
 
 		return ResponseEntity.ok().body("User registered successfully!");
 	}
+
+	@GetMapping("/paper/{pageno}") // all list by pagination
+	// @PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> getAllPaper(@PathVariable(value = "pageno") Integer pageno) {
+
+		Pageable pageable = PageRequest.of(pageno, 10);
+		Map<String, Object> map = paperService.findAll(pageable);
+
+		return ResponseEntity.ok(map);
+	}
+
+	@GetMapping("/getpaper/{id}") // all list by pagination
+	// @PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<?> getPaperById(@PathVariable(value = "id") int id) throws ResourceNotFoundException {
+
+		Paper p = paperService.findById(id)
+				.orElseThrow(() -> new ResourceNotFoundException("Item not found for this id :: " + id));
+		;
+
+		return ResponseEntity.ok().body(p);
+	}
+
+	@PostMapping("/createpaper")
+	public ResponseEntity<Object> createPaper(@Valid @RequestBody Paper paper, BindingResult result)
+			throws ResourceNotFoundException {
+		ResponseEntity<Object> obj = getError(result);
+		if (obj != null) {
+			return obj;
+		}
+
+		Paper p = paperService.savePaper(paper);
+
+		return ResponseEntity.ok().body(p);
+	}
+
+	@PostMapping("/updatepaper")
+	public ResponseEntity<Object> updatePaper(@Valid @RequestBody Paper paper, BindingResult result)
+			throws ResourceNotFoundException {
+		ResponseEntity<Object> obj = getError(result);
+		if (obj != null) {
+			return obj;
+		}
+
+		paperService.updatePaper(paper);
+
+		return ResponseEntity.ok().body("Paper data updated successfully!");
+	}
+
+	@PostMapping("/savequestionpaper")
+	public ResponseEntity<Object> saveQuestionPaper(@Valid @RequestBody List<Question> ques,
+			@Valid @RequestBody List<Option> option, @Valid @RequestBody User user, @Valid @RequestBody Paper paper,
+			BindingResult result) {
+		ResponseEntity<Object> obj = getError(result);
+		if (obj != null) {
+			return obj;
+		}
+		questionService.saveQuestionPaper(ques, option, user, paper);
+		return ResponseEntity.ok().body("Question data updated successfully!");
+	}
+
+	@PostMapping("/getquestionpaper")
+	public ResponseEntity<Object> getQuestionOption(@Valid @RequestBody Integer paperId,
+			@Valid @RequestBody Integer userId, BindingResult result) throws ResourceNotFoundException {
+		ResponseEntity<Object> obj = getError(result);
+		if (obj != null) {
+			return obj;
+		}
+		if (questionService.isValidForQuiz(userId, paperId)) {
+			throw new ResourceNotFoundException("Not valid for quiz");
+		}
+
+		return ResponseEntity.ok().body(questionService.getQuestionOption(paperId, 0));
+	}
+
+	@PostMapping("/getquestionpaperresult")
+	public ResponseEntity<Object> getQuestionOptionResult(@Valid @RequestBody Integer paperId,
+			@Valid @RequestBody Integer userId, BindingResult result) {
+		ResponseEntity<Object> obj = getError(result);
+		if (obj != null) {
+			return obj;
+		}
+
+		return ResponseEntity.ok().body(questionService.getQuestionOption(paperId, userId));
+	}
+
+	@PostMapping("/savetestresult")
+	public ResponseEntity<Object> saveUserQuestions(@Valid @RequestBody List<MapUserQuestionChoice> muqc) {
+		questionService.saveUserQuestions(muqc);
+		return ResponseEntity.ok().body(muqc);
+
+	}
+
 	ResponseEntity<Object> getError(BindingResult result) {
 		if (result.getErrorCount() > 0) {
 

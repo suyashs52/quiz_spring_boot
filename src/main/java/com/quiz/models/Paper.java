@@ -10,47 +10,51 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.UniqueConstraint;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
-import org.hibernate.annotations.NaturalId;
 import org.springframework.format.annotation.NumberFormat;
 import org.springframework.format.annotation.NumberFormat.Style;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.quiz.validator.ValidRole;
-
 @Entity
-@Table(name = "users", uniqueConstraints = { @UniqueConstraint(columnNames = { "username" }),
-		@UniqueConstraint(columnNames = { "phone" }) })
-// @JsonIgnoreProperties(value = { "createDate", "updatedAt" }, allowGetters =
-// true)
-public class User extends Login {
+@Table(name = "paper")
+public class Paper {
+
 	@Id
-	@GeneratedValue(generator = "user_generator")
-	@SequenceGenerator(name = "user_generator", sequenceName = "user_sequence", initialValue = 1000)
+	@GeneratedValue(generator = "paper_generator")
+	@SequenceGenerator(name = "paper_generator", sequenceName = "paper_sequence", initialValue = 1000)
 	private Integer id;
 
 	@NotBlank
 	@Size(min = 3, max = 100)
 	private String name;
 
-	 
 	@NotBlank
-	@Size(min = 10, max = 10)
-	@NumberFormat(style = Style.NUMBER)
-	private String phone;
+	@Size(min = 3, max = 200)
+	@Column(name = "description", nullable = false, updatable = false)
+	private String desc;
 
-	@ValidRole(message = "role must be admin / user", value = { Roles.ADMIN, Roles.USER })
-	private String role;
+	@NotNull
+	@Min(2)
+	@Max(60)
+	@NumberFormat(style = Style.NUMBER)
+	@Column(name = "total_time", nullable = false, updatable = false)
+
+	private Integer totalTime;
+
+	@NotNull
+	@Min(10)
+	@Max(20)
+	@NumberFormat(style = Style.NUMBER)
+	@Column(name = "total_question", nullable = false, updatable = false)
+
+	private Integer totalQuestion;
 
 	@Temporal(TemporalType.TIMESTAMP)
-	//@JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy", locale = "pt-BR", timezone = "Brazil/East")
 	@Column(name = "created_date", nullable = false, updatable = false)
-
-	// @Convert(converter = LocalDateTimeConverter.class)
-
 	private Date createDate;
 
 	@Size(min = 3, max = 100)
@@ -62,7 +66,6 @@ public class User extends Login {
 	}
 
 	public void setId(Integer id) {
-
 		this.id = id;
 	}
 
@@ -74,20 +77,12 @@ public class User extends Login {
 		this.name = name;
 	}
 
-	public String getPhone() {
-		return phone;
+	public String getDesc() {
+		return desc;
 	}
 
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
-
-	public String getRole() {
-		return role;
-	}
-
-	public void setRole(String role) {
-		this.role = role;
+	public void setDesc(String desc) {
+		this.desc = desc;
 	}
 
 	public Date getCreateDate() {
@@ -104,6 +99,22 @@ public class User extends Login {
 
 	public void setCreatedBy(String createdBy) {
 		this.createdBy = createdBy;
+	}
+
+	public Integer getTotalTime() {
+		return totalTime;
+	}
+
+	public void setTotalTime(Integer totalTime) {
+		this.totalTime = totalTime;
+	}
+
+	public Integer getTotalQuestion() {
+		return totalQuestion;
+	}
+
+	public void setTotalQuestion(Integer totalQuestion) {
+		this.totalQuestion = totalQuestion;
 	}
 
 }

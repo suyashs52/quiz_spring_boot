@@ -16,8 +16,8 @@ public class UserPrinciple implements UserDetails {
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 8121135578675172047L;
-	private Long id;
+	private static final Long serialVersionUID = 8121135578675172047L;
+	private Integer id;
 
 	private String name;
 
@@ -30,7 +30,7 @@ public class UserPrinciple implements UserDetails {
 
 	private Collection<? extends GrantedAuthority> authorities;
 
-	public UserPrinciple(Long id, String name, String username, String phone, String password,
+	public UserPrinciple(Integer id, String name, String username, String phone, String password,
 			Collection<? extends GrantedAuthority> authorities) {
 		this.id = id;
 		this.name = name;
@@ -42,7 +42,7 @@ public class UserPrinciple implements UserDetails {
 
 	public static UserPrinciple build(com.quiz.models.User user) {
 		List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-		authorities.add(new SimpleGrantedAuthority(user.getRole()));
+		authorities.add(new SimpleGrantedAuthority("ROLE_"+user.getRole()));
 
 		return new UserPrinciple(user.getId(), user.getName(), user.getUsername(), user.getPhone(), user.getPassword(),
 				authorities);
@@ -101,11 +101,11 @@ public class UserPrinciple implements UserDetails {
 		return Objects.equals(id, user.id);
 	}
 
-	public Long getId() {
+	public Integer getId() {
 		return id;
 	}
 
-	public void setId(Long id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 
