@@ -2,7 +2,7 @@
 
 spring boot application for quiz system
 
-Angular module you can find on https://github.com/suyashs52/quiz_angular
+Angular module you can find on https://github.com/suyashs52/quiz_angular_code
 
 create table as per model in postgreSql.
 update project
