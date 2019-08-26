@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.servlet.ServletException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -31,6 +33,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		LOGGER.info(ex.getMessage());
 		return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
 	}
+	@ExceptionHandler(ServletException.class)
+	public ResponseEntity<?> jwtExpriationError(ServletException ex, WebRequest request) {
+		ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getMessage(), request.getDescription(false),
+				HttpStatus.INTERNAL_SERVER_ERROR, new ArrayList<String>() {
+					{
+						add("Please login");
+					}
+				});
+		LOGGER.info(ex.getMessage());
+		return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<?> globleExcpetionHandler(Exception ex, WebRequest request) {
@@ -39,32 +52,30 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		LOGGER.info(ex.getMessage());
 		return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
 	}
-/*
-	@Override
-	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-			HttpHeaders headers, HttpStatus status, WebRequest request) {
-		List<String> errors = new ArrayList<String>();
-		for (FieldError error : ex.getBindingResult().getFieldErrors()) {
-			errors.add(error.getField() + ": " + error.getDefaultMessage());
-		}
-		for (ObjectError error : ex.getBindingResult().getGlobalErrors()) {
-			errors.add(error.getObjectName() + ": " + error.getDefaultMessage());
-		}
-		ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getLocalizedMessage(), "validation error",
-				HttpStatus.BAD_REQUEST, errors);
-		LOGGER.info(ex.getMessage());
-		return handleExceptionInternal(ex, errorDetails, headers, errorDetails.getStatus(), request);
-	}
 
-	@Override
-	protected ResponseEntity<Object> handleMissingServletRequestParameter(MissingServletRequestParameterException ex,
-			HttpHeaders headers, HttpStatus status, WebRequest request) {
-		String error = ex.getParameterName() + " parameter is missing";
-
-		ErrorDetails errorDetails = new ErrorDetails(new Date(), ex.getLocalizedMessage(), error,
-				HttpStatus.BAD_REQUEST);
-		LOGGER.info(ex.getMessage());
-		return new ResponseEntity<Object>(errorDetails, new HttpHeaders(), errorDetails.getStatus());
-	}
-*/
+	
+	/*
+	 * @Override protected ResponseEntity<Object>
+	 * handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders
+	 * headers, HttpStatus status, WebRequest request) { List<String> errors = new
+	 * ArrayList<String>(); for (FieldError error :
+	 * ex.getBindingResult().getFieldErrors()) { errors.add(error.getField() + ": "
+	 * + error.getDefaultMessage()); } for (ObjectError error :
+	 * ex.getBindingResult().getGlobalErrors()) { errors.add(error.getObjectName() +
+	 * ": " + error.getDefaultMessage()); } ErrorDetails errorDetails = new
+	 * ErrorDetails(new Date(), ex.getLocalizedMessage(), "validation error",
+	 * HttpStatus.BAD_REQUEST, errors); LOGGER.info(ex.getMessage()); return
+	 * handleExceptionInternal(ex, errorDetails, headers, errorDetails.getStatus(),
+	 * request); }
+	 * 
+	 * @Override protected ResponseEntity<Object>
+	 * handleMissingServletRequestParameter(MissingServletRequestParameterException
+	 * ex, HttpHeaders headers, HttpStatus status, WebRequest request) { String
+	 * error = ex.getParameterName() + " parameter is missing";
+	 * 
+	 * ErrorDetails errorDetails = new ErrorDetails(new Date(),
+	 * ex.getLocalizedMessage(), error, HttpStatus.BAD_REQUEST);
+	 * LOGGER.info(ex.getMessage()); return new ResponseEntity<Object>(errorDetails,
+	 * new HttpHeaders(), errorDetails.getStatus()); }
+	 */
 }

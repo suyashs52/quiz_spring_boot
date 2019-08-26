@@ -7,7 +7,7 @@ public interface UserProjection {
 	String getUsername();
 
 	@Value("#{target.id}")
-	Long getId();
+	Integer getId();
 
 	@Value("#{target.name}")
 	String getName();

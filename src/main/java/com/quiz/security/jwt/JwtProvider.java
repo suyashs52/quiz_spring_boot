@@ -37,7 +37,7 @@ public class JwtProvider {
 		return Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody().getSubject();
 	}
 
-	public boolean validateJwtToken(String authToken) {
+	public boolean validateJwtToken(String authToken) throws ExpiredJwtException {
 		try {
 			Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
 			return true;
@@ -45,9 +45,7 @@ public class JwtProvider {
 			LOGGER.error("Invalid JWT signature -> Message: {} ", e);
 		} catch (MalformedJwtException e) {
 			LOGGER.error("Invalid JWT token -> Message: {}", e);
-		} catch (ExpiredJwtException e) {
-			LOGGER.error("Expired JWT token -> Message: {}", e);
-		} catch (UnsupportedJwtException e) {
+		}   catch (UnsupportedJwtException e) {
 			LOGGER.error("Unsupported JWT token -> Message: {}", e);
 		} catch (IllegalArgumentException e) {
 			LOGGER.error("JWT claims string is empty -> Message: {}", e);

@@ -8,10 +8,11 @@ import javax.validation.Valid;
 import org.springframework.data.domain.Pageable;
 
 import com.quiz.models.Paper;
+import com.quiz.security.UserPrinciple;
 import com.quiz.utils.ResourceNotFoundException;
 
 public interface PaperService {
-	Map<String, Object> findAll(Pageable pageable);
+	Map<String, Object> findAll(Pageable pageable,UserPrinciple user);
 
 	Optional<Paper> findById(Integer itemId);
 

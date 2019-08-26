@@ -47,7 +47,7 @@ public class Paper {
 
 	@NotNull
 	@Min(10)
-	@Max(20)
+	@Max(10)
 	@NumberFormat(style = Style.NUMBER)
 	@Column(name = "total_question", nullable = false, updatable = false)
 

@@ -81,34 +81,19 @@ public class RestController {
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		UserPrinciple userPrincipal = (UserPrinciple) authentication.getPrincipal();
 
-		String role = userPrincipal.getAuthorities().toString();
-		String name = userPrincipal.getName();
-		String jwt = jwtProvider.generateJwtToken(authentication);
+		return ResponseEntity.ok(new JwtResponse(jwtProvider.generateJwtToken(authentication), userPrincipal.getName(),
+				userPrincipal.getAuthorities().toString(), userPrincipal.getId()));
 
-		return ResponseEntity.ok(new JwtResponse(jwt, name, role));
 	}
+ 
 
-	@PostMapping("/logins")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> authenticateUser() {
-		// ResponseEntity<Object> obj =
-
-		return ResponseEntity.ok(11);
-	}
-
-	@GetMapping("/user")
-	@PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> getUser() {
-		// ResponseEntity<Object> obj =
-
-		return ResponseEntity.ok(11);
-	}
+	 
 
 	@GetMapping("/users/{pageno}") // all list by pagination
-	// @PreAuthorize("hasRole('ADMIN')")
+ @PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<?> getAllUser(@PathVariable(value = "pageno") Integer pageno) {
 
-		Pageable pageable = PageRequest.of(pageno, 10);
+		Pageable pageable = PageRequest.of(pageno, 5);
 		Map<String, Object> map = userService.findAll(pageable);
 
 		return ResponseEntity.ok(map);
@@ -130,6 +115,7 @@ public class RestController {
 	}
 
 	@PostMapping("/updateuser")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Object> updateUser(@Valid @RequestBody User signup, BindingResult result)
 			throws ResourceNotFoundException {
 		ResponseEntity<Object> obj = getError(result);
@@ -145,18 +131,24 @@ public class RestController {
 	}
 
 	@GetMapping("/paper/{pageno}") // all list by pagination
-	// @PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> getAllPaper(@PathVariable(value = "pageno") Integer pageno) {
+	@PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+	public ResponseEntity<?> getAllPaper(@PathVariable(value = "pageno") Integer pageno) throws ResourceNotFoundException {
+		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		if (principal instanceof UserPrinciple) {
+			UserPrinciple user = (UserPrinciple) principal;
+			Pageable pageable = PageRequest.of(pageno, 5);
+			Map<String, Object> map = paperService.findAll(pageable,user);
 
-		Pageable pageable = PageRequest.of(pageno, 10);
-		Map<String, Object> map = paperService.findAll(pageable);
-
-		return ResponseEntity.ok(map);
+			return ResponseEntity.ok(map);
+		}
+		 
+		throw new ResourceNotFoundException("Contact Admin!");
+		
 	}
 
 	@GetMapping("/getpaper/{id}") // all list by pagination
 	// @PreAuthorize("hasRole('ADMIN')")
-	public ResponseEntity<?> getPaperById(@PathVariable(value = "id") int id) throws ResourceNotFoundException {
+	public ResponseEntity<?> getPaperById(@PathVariable(value = "id") Integer id) throws ResourceNotFoundException {
 
 		Paper p = paperService.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Item not found for this id :: " + id));
@@ -166,6 +158,7 @@ public class RestController {
 	}
 
 	@PostMapping("/createpaper")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Object> createPaper(@Valid @RequestBody Paper paper, BindingResult result)
 			throws ResourceNotFoundException {
 		ResponseEntity<Object> obj = getError(result);
@@ -179,6 +172,7 @@ public class RestController {
 	}
 
 	@PostMapping("/updatepaper")
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<Object> updatePaper(@Valid @RequestBody Paper paper, BindingResult result)
 			throws ResourceNotFoundException {
 		ResponseEntity<Object> obj = getError(result);
@@ -192,20 +186,21 @@ public class RestController {
 	}
 
 	@PostMapping("/savequestionpaper")
-	public ResponseEntity<Object> saveQuestionPaper(@Valid @RequestBody PassParam param, BindingResult result) throws ResourceNotFoundException {
+	@PreAuthorize("hasRole('ADMIN')")
+	public ResponseEntity<Object> saveQuestionPaper(@Valid @RequestBody PassParam param, BindingResult result)
+			throws ResourceNotFoundException {
 		ResponseEntity<Object> obj = getError(result);
 		if (obj != null) {
 			return obj;
 		}
-		 List<Question> ques=param.getQues();
-		 Paper paper=param.getPaper();
+		List<Question> ques = param.getQues();
+		Paper paper = param.getPaper();
 		questionService.saveQuestionPaper(ques, paper);
 		return ResponseEntity.ok().body("Question data updated successfully!");
 	}
-	
-	
 
 	@PostMapping("/getquestionpaper/{paperId}/{userId}")
+	@PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
 	public ResponseEntity<Object> getQuestionOption(@PathVariable(value = "paperId") Integer paperId,
 			@PathVariable(value = "userId") Integer userId) throws ResourceNotFoundException {
 
@@ -218,15 +213,22 @@ public class RestController {
 
 	@PostMapping("/getquestionpaperresult/{paperId}/{userId}")
 	public ResponseEntity<Object> getQuestionOptionResult(@PathVariable(value = "paperId") Integer paperId,
-			@PathVariable(value = "userId") Integer userId) {
-
-		return ResponseEntity.ok().body(questionService.getQuestionOption(paperId, userId));
+			@PathVariable(value = "userId") Integer userId) throws ResourceNotFoundException {
+		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		if (principal instanceof UserPrinciple) {
+			Integer id = ((UserPrinciple) principal).getId();
+			if (!id.equals(userId))
+				throw new ResourceNotFoundException("Invalid Request! Try login");
+			return ResponseEntity.ok().body(questionService.getQuestionOption(paperId, userId));
+		}
+		 
+		throw new ResourceNotFoundException("Contact Admin!");
 	}
 
 	@PostMapping("/savetestresult")
-	public ResponseEntity<Object> saveUserQuestions(@Valid @RequestBody List<MapUserQuestionChoice> muqc) {
-		questionService.saveUserQuestions(muqc);
-		return ResponseEntity.ok().body(muqc);
+	public ResponseEntity<Object> saveUserQuestions(@Valid @RequestBody SaveResult sr) {
+		questionService.saveUserQuestions(sr.getMuqc());
+		return ResponseEntity.ok().body(sr.getMuqc());
 
 	}
 
@@ -249,20 +251,38 @@ public class RestController {
 	}
 
 }
-class PassParam{
+
+class PassParam {
 	List<Question> ques;
 	Paper paper;
+
 	public List<Question> getQues() {
 		return ques;
 	}
+
 	public void setQues(List<Question> ques) {
 		this.ques = ques;
 	}
+
 	public Paper getPaper() {
 		return paper;
 	}
+
 	public void setPaper(Paper paper) {
 		this.paper = paper;
 	}
-	
+
+}
+
+class SaveResult {
+	List<MapUserQuestionChoice> muqc;
+
+	public List<MapUserQuestionChoice> getMuqc() {
+		return muqc;
+	}
+
+	public void setMuqc(List<MapUserQuestionChoice> muqc) {
+		this.muqc = muqc;
+	}
+
 }

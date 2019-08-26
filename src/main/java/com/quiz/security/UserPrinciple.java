@@ -25,27 +25,30 @@ public class UserPrinciple implements UserDetails {
 
 	private String phone;
 
+	private String role;
+
 	@JsonIgnore
 	private String password;
 
 	private Collection<? extends GrantedAuthority> authorities;
 
-	public UserPrinciple(Integer id, String name, String username, String phone, String password,
+	public UserPrinciple(Integer id, String name, String username, String phone, String password, String role,
 			Collection<? extends GrantedAuthority> authorities) {
 		this.id = id;
 		this.name = name;
 		this.username = username;
 		this.phone = phone;
 		this.password = password;
+		this.role = role;
 		this.authorities = authorities;
 	}
 
 	public static UserPrinciple build(com.quiz.models.User user) {
 		List<GrantedAuthority> authorities = new ArrayList<GrantedAuthority>();
-		authorities.add(new SimpleGrantedAuthority("ROLE_"+user.getRole()));
+		authorities.add(new SimpleGrantedAuthority("ROLE_" + user.getRole()));
 
 		return new UserPrinciple(user.getId(), user.getName(), user.getUsername(), user.getPhone(), user.getPassword(),
-				authorities);
+				user.getRole(), authorities);
 	}
 
 	@Override
@@ -123,6 +126,14 @@ public class UserPrinciple implements UserDetails {
 
 	public void setPhone(String phone) {
 		this.phone = phone;
+	}
+
+	public String getRole() {
+		return role;
+	}
+
+	public void setRole(String role) {
+		this.role = role;
 	}
 
 	public void setUsername(String username) {

@@ -1,5 +1,6 @@
 package com.quiz.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -9,19 +10,20 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.PagingAndSortingRepository;
 
 import com.quiz.models.Paper;
-import com.quiz.models.User;
-import com.quiz.projection.UserProjection;
 
 public interface PaperRepository extends PagingAndSortingRepository<Paper, Integer> {
-	Optional<Paper> findById(Long id);
+	Optional<Paper> findById(Integer id);
+	
 
-	Boolean existsById(int id);
+	boolean existsById(Integer id);
  
 	Boolean existsByName(String name);
 
 	public Page<Paper> findAll(Pageable pageable);
+	public Page<Paper> findAllByIdIn(Pageable pageable,List<Integer> id);
+	
 
 	@Modifying
 	@Query("update Paper u set u.totalTime = ?2, u.desc=?3 where u.id = ?1")
-	void updatePaper(long id, Integer totalTime,String desc);
+	void updatePaper(Integer id, Integer totalTime,String desc);
 }

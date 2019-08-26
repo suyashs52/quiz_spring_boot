@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Phaser;
 import java.util.stream.Collectors;
 
 import javax.transaction.Transactional;
@@ -27,9 +28,9 @@ import com.quiz.repository.QuestionRepository;
 import com.quiz.repository.UserRepository;
 
 @Service
-public class QuestionService {
+public class QuestionService implements Runnable {
 	private static final Logger LOGGER = LoggerFactory.getLogger(PaperServiceImpl.class);
-
+	Phaser phaser;
 	@Autowired
 	QuestionRepository questionRepository;
 	@Autowired
@@ -40,21 +41,35 @@ public class QuestionService {
 	MapUserPaperRepository mapUserPaperRepository;
 	@Autowired
 	UserRepository userRepository;
+	
+	public void setPhaser(Phaser ph) {
+		this.phaser=ph;
+		this.phaser.register();
+		new Thread(this).start();
+	}
 
 	public Map<String, Object> getQuestionOption(Integer paperId, Integer userId) {
 		Map<String, Object> map = new HashMap<String, Object>();
 		List<Question> ques = questionRepository.findAllByFkPaperId(paperId);
+
 		List<Integer> fkquestion = ques.stream().map(m -> m.getId()).collect(Collectors.toList());
+		
+		
 		List<Option> opt = optionRepository.findAllByFkQuestionIdIn(fkquestion);
+
 		List<Option> opt1;
 		List<MapUserQuestionChoice> mapUserQuestionChoices = null;// mapUserQuestionChoiceRepository.findAllByFkPaperAndFkUser(paperId,userId);
 
 		if (userId > 0) {
-			map.put("mapuserpaper", mapUserPaperRepository.findAllByFkPaperAndFkUser(paperId, userId));
+			map.put("mapuserpaper", mapUserPaperRepository.findFirstByFkPaperAndFkUser(paperId, userId));
+
 			mapUserQuestionChoices = mapUserQuestionChoiceRepository.findAllByFkPaperAndFkUser(paperId, userId);
 			for (Question question : ques) {
-				opt1 = opt.stream().filter(f -> f.getFkQuestionId().equals(question.getId())).collect(Collectors.toList());
+
+				opt1 = opt.stream().filter(f -> f.getFkQuestionId().equals(question.getId()))
+						.collect(Collectors.toList());
 				question.setOpt(opt1);
+
 				MapUserQuestionChoice muqc = mapUserQuestionChoices.stream()
 						.filter(f -> f.getFkQuestion().equals(question.getId())).findFirst()
 						.orElseGet(MapUserQuestionChoice::new);
@@ -62,7 +77,8 @@ public class QuestionService {
 			}
 		} else {
 			for (Question question : ques) {
-				opt1 = opt.stream().filter(f -> f.getFkQuestionId().equals(question.getId())).collect(Collectors.toList());
+				opt1 = opt.stream().filter(f -> f.getFkQuestionId().equals(question.getId()))
+						.collect(Collectors.toList());
 				question.setOpt(opt1);
 			}
 			for (Option opts : opt) {
@@ -81,15 +97,15 @@ public class QuestionService {
 		List<Option> option = new ArrayList<>();
 		for (Question q : ques) {
 			for (Option o : q.getOpt()) {
-				/*if (o.getIsCorrectChoice()) {
-					q.setFkCorrectChoice(o.getId());
-				}*/
+				/*
+				 * if (o.getIsCorrectChoice()) { q.setFkCorrectChoice(o.getId()); }
+				 */
 				o.setFkQuestionId(q.getId());
 				option.add(o);
 			}
 
 		}
-		 optionRepository.saveAll(option);
+		optionRepository.saveAll(option);
 
 		// questionRepository.flush();
 		for (Question q : ques) {
@@ -98,7 +114,7 @@ public class QuestionService {
 					q.setFkCorrectChoice(o.getId());
 					break;
 				}
-				 
+
 			}
 			questionRepository.updateFkCorrectChoiceById(q.getFkCorrectChoice(), q.getId());
 		}
@@ -116,10 +132,11 @@ public class QuestionService {
 
 	public Boolean isValidForQuiz(Integer userid, Integer paperId) {
 
-		return mapUserPaperRepository.existsByFkUserAndFkPaperAndMarksIsNull(userid, paperId);
+		return mapUserPaperRepository.existsByFkUserAndFkPaper(userid, paperId);
 
 	}
 
+	@Transactional
 	public void saveUserQuestions(List<MapUserQuestionChoice> muqc) {
 
 		if (muqc.size() > 0) {
@@ -127,13 +144,15 @@ public class QuestionService {
 			List<Question> qu = questionRepository.findAllByFkPaperId(m.getFkPaper());
 			Integer totalMarks = 0;
 			for (MapUserQuestionChoice mqc : muqc) {
-				Optional<Question> q = qu.stream().filter(f -> f.getId() == mqc.getFkQuestion()).findFirst();
+				Optional<Question> q = qu.stream().filter(f -> f.getId().equals(mqc.getFkQuestion())).findFirst();
 				if (q.isPresent()) {
-					if (mqc.getFkChoice() == q.get().getFkCorrectChoice()) {
+					if (mqc.getFkChoice().equals(q.get().getFkCorrectChoice())) {
 						mqc.setMarks(q.get().getCorrectMark());
+						mqc.setIsCorrect(true);
 
 					} else {
 						mqc.setMarks(q.get().getWrongMark());
+						mqc.setIsCorrect(false);
 					}
 					totalMarks += mqc.getMarks();
 				}
@@ -142,6 +161,12 @@ public class QuestionService {
 			mapUserPaperRepository.updateMarks(totalMarks, m.getFkUser(), m.getFkPaper());
 
 		}
+
+	}
+
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
 
 	}
 

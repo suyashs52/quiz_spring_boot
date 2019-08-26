@@ -38,7 +38,7 @@ public class User extends Login {
 
 	 
 	@NotBlank
-	@Size(min = 10, max = 10)
+	@Size(min = 10, max = 10,message="phone number should be of 10 length")
 	@NumberFormat(style = Style.NUMBER)
 	private String phone;
 

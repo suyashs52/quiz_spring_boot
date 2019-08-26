@@ -39,6 +39,9 @@ public class MapUserPaper {
 	@Column(name = "marks")
 	private Integer marks;
 
+	MapUserPaper(){
+		
+	}
 	public MapUserPaper(Integer userid, Integer paperid) {
 		// TODO Auto-generated constructor stub
 		this.fkUser = userid;
